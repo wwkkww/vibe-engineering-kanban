@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - DATABASE_PATH=/app/data/kanban.db
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-key-change-in-production}
+      - VALID_USERNAME=${VALID_USERNAME:-user}
+      - VALID_PASSWORD=${VALID_PASSWORD:-password}
+    volumes:
+      - ./backend:/app/backend
+      - ./frontend/out:/app/out
+      - app_data:/app/data
+    command: uv run python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  app_data:
