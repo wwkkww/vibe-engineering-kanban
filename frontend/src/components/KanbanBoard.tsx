@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -14,10 +15,44 @@ import {
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import { useAuth } from "@/context/AuthContext";
+import { logout } from "@/lib/auth";
 
 export const KanbanBoard = () => {
   const [board, setBoard] = useState<BoardData>(() => initialData);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { setUser } = useAuth();
+  const router = useRouter();
+
+  // Fetch board data from API on mount
+  useEffect(() => {
+    const loadBoard = async () => {
+      try {
+        const response = await fetch("/api/board", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.push("/login");
+            return;
+          }
+          throw new Error("Failed to fetch board");
+        }
+
+        const boardData = await response.json();
+        setBoard(boardData);
+      } catch (error) {
+        console.error("Error loading board:", error);
+        // Fallback to initial data on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadBoard();
+  }, [router]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -26,6 +61,36 @@ export const KanbanBoard = () => {
   );
 
   const cardsById = useMemo(() => board.cards, [board.cards]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setUser(null);
+      router.push("/login");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
+
+  // Sync board to API
+  const syncBoard = async (updatedBoard: BoardData) => {
+    try {
+      const response = await fetch("/api/board", {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedBoard),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to sync board:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error syncing board:", error);
+    }
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveCardId(event.active.id as string);
@@ -39,57 +104,75 @@ export const KanbanBoard = () => {
       return;
     }
 
-    setBoard((prev) => ({
-      ...prev,
-      columns: moveCard(prev.columns, active.id as string, over.id as string),
-    }));
+    const updatedBoard = {
+      ...board,
+      columns: moveCard(board.columns, active.id as string, over.id as string),
+    };
+    
+    setBoard(updatedBoard);
+    syncBoard(updatedBoard);
   };
 
   const handleRenameColumn = (columnId: string, title: string) => {
-    setBoard((prev) => ({
-      ...prev,
-      columns: prev.columns.map((column) =>
+    const updatedBoard = {
+      ...board,
+      columns: board.columns.map((column) =>
         column.id === columnId ? { ...column, title } : column
       ),
-    }));
+    };
+    
+    setBoard(updatedBoard);
+    syncBoard(updatedBoard);
   };
 
-  const handleAddCard = (columnId: string, title: string, details: string) => {
+  const handleAddCard = async (columnId: string, title: string, details: string) => {
     const id = createId("card");
-    setBoard((prev) => ({
-      ...prev,
+    const updatedBoard = {
+      ...board,
       cards: {
-        ...prev.cards,
+        ...board.cards,
         [id]: { id, title, details: details || "No details yet." },
       },
-      columns: prev.columns.map((column) =>
+      columns: board.columns.map((column) =>
         column.id === columnId
           ? { ...column, cardIds: [...column.cardIds, id] }
           : column
       ),
-    }));
+    };
+    
+    setBoard(updatedBoard);
+    syncBoard(updatedBoard);
   };
 
   const handleDeleteCard = (columnId: string, cardId: string) => {
-    setBoard((prev) => {
-      return {
-        ...prev,
-        cards: Object.fromEntries(
-          Object.entries(prev.cards).filter(([id]) => id !== cardId)
-        ),
-        columns: prev.columns.map((column) =>
-          column.id === columnId
-            ? {
-                ...column,
-                cardIds: column.cardIds.filter((id) => id !== cardId),
-              }
+    const updatedBoard = {
+      ...board,
+      cards: Object.fromEntries(
+        Object.entries(board.cards).filter(([id]) => id !== cardId)
+      ),
+      columns: board.columns.map((column) =>
+        column.id === columnId
+          ? {
+              ...column,
+              cardIds: column.cardIds.filter((id) => id !== cardId),
+            }
             : column
-        ),
-      };
-    });
+      ),
+    };
+    
+    setBoard(updatedBoard);
+    syncBoard(updatedBoard);
   };
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading board...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden">
@@ -111,13 +194,21 @@ export const KanbanBoard = () => {
                 and capture quick notes without getting buried in settings.
               </p>
             </div>
-            <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gray-text)]">
-                Focus
-              </p>
-              <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
-                One board. Five columns. Zero clutter.
-              </p>
+            <div className="flex flex-col gap-4">
+              <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gray-text)]">
+                  Focus
+                </p>
+                <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
+                  One board. Five columns. Zero clutter.
+                </p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="rounded-2xl border border-[var(--stroke)] bg-white px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--navy-dark)] transition-colors hover:bg-[var(--surface)]"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-4">

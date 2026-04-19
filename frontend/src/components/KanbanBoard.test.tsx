@@ -1,18 +1,47 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { AuthProvider } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { initialData } from "@/lib/kanban";
 
-const getFirstColumn = () => screen.getAllByTestId(/column-/i)[0];
+vi.mock("next/navigation");
+vi.mock("@/lib/auth", () => ({
+  logout: vi.fn(),
+  verifyAuth: vi.fn().mockResolvedValue(null),
+}));
+
+global.fetch = vi.fn();
+
+const renderWithAuth = (component: React.ReactElement) => {
+  return render(<AuthProvider>{component}</AuthProvider>);
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  (useRouter as any).mockReturnValue({ push: vi.fn() });
+  (global.fetch as any).mockResolvedValueOnce({
+    ok: true,
+    json: vi.fn().mockResolvedValueOnce(initialData),
+  });
+});
 
 describe("KanbanBoard", () => {
-  it("renders five columns", () => {
-    render(<KanbanBoard />);
-    expect(screen.getAllByTestId(/column-/i)).toHaveLength(5);
+  it("renders five columns", async () => {
+    renderWithAuth(<KanbanBoard />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/column-/i)).toHaveLength(5);
+    });
   });
 
   it("renames a column", async () => {
-    render(<KanbanBoard />);
-    const column = getFirstColumn();
+    renderWithAuth(<KanbanBoard />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/column-/i)).toHaveLength(5);
+    });
+
+    const column = screen.getAllByTestId(/column-/i)[0];
     const input = within(column).getByLabelText("Column title");
     await userEvent.clear(input);
     await userEvent.type(input, "New Name");
@@ -20,8 +49,12 @@ describe("KanbanBoard", () => {
   });
 
   it("adds and removes a card", async () => {
-    render(<KanbanBoard />);
-    const column = getFirstColumn();
+    renderWithAuth(<KanbanBoard />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/column-/i)).toHaveLength(5);
+    });
+
+    const column = screen.getAllByTestId(/column-/i)[0];
     const addButton = within(column).getByRole("button", {
       name: /add a card/i,
     });
