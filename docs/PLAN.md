@@ -206,63 +206,63 @@ Add login screen requiring hardcoded credentials ("user"/"password") to access b
 
 ### Substeps
 
-- [ ] Design auth flow
-  - [ ] POST /api/auth/login with {username, password}
-  - [ ] Return JWT token (or session-based, simpler for MVP)
-  - [ ] Store token in httpOnly cookie (secure)
-  - [ ] GET /api/auth/logout
-  - [ ] GET /api/auth/verify to check current user
+- [x] Design auth flow
+  - [x] POST /api/auth/login with {username, password}
+  - [x] Return JWT token (or session-based, simpler for MVP)
+  - [x] Store token in httpOnly cookie (secure)
+  - [x] GET /api/auth/logout
+  - [x] GET /api/auth/verify to check current user
 
-- [ ] Create frontend auth component
-  - [ ] Create components/LoginForm.tsx
-  - [ ] Create pages/login route (or modal overlay)
-  - [ ] Add username/password inputs
-  - [ ] Submit to POST /api/auth/login
-  - [ ] Handle errors (invalid credentials)
-  - [ ] Redirect to / on success
-  - [ ] Store token (if using localStorage)
+- [x] Create frontend auth component
+  - [x] Create components/LoginForm.tsx
+  - [x] Create pages/login route (or modal overlay)
+  - [x] Add username/password inputs
+  - [x] Submit to POST /api/auth/login
+  - [x] Handle errors (invalid credentials)
+  - [x] Redirect to / on success
+  - [x] Store token (if using localStorage)
 
-- [ ] Create backend auth routes
-  - [ ] POST /api/auth/login endpoint
-  - [ ] Check credentials: username="user", password="password"
-  - [ ] Return token/session on success
-  - [ ] Return 401 on failure
-  - [ ] GET /api/auth/logout endpoint
-  - [ ] GET /api/auth/verify endpoint (returns current user)
+- [x] Create backend auth routes
+  - [x] POST /api/auth/login endpoint
+  - [x] Check credentials: username="user", password="password"
+  - [x] Return token/session on success
+  - [x] Return 401 on failure
+  - [x] GET /api/auth/logout endpoint
+  - [x] GET /api/auth/verify endpoint (returns current user)
 
-- [ ] Create auth middleware
-  - [ ] Protect /api/board/* routes (require auth)
-  - [ ] Protect GET / on frontend (redirect to login if not authenticated)
-  - [ ] Add auth check to frontend layout
+- [x] Create auth middleware
+  - [x] Protect /api/board/* routes (require auth)
+  - [x] Protect GET / on frontend (redirect to login if not authenticated)
+  - [x] Add auth check to frontend layout
 
-- [ ] Update KanbanBoard to check auth
-  - [ ] On mount, verify user is authenticated
-  - [ ] Call GET /api/auth/verify
-  - [ ] Show login screen if not authenticated
+- [x] Update KanbanBoard to check auth
+  - [x] On mount, verify user is authenticated
+  - [x] Call GET /api/auth/verify
+  - [x] Show login screen if not authenticated
 
-- [ ] Add logout button
-  - [ ] Add button to board header
-  - [ ] Call POST /api/auth/logout
-  - [ ] Clear token/session
-  - [ ] Redirect to login page
+- [x] Add logout button
+  - [x] Add button to board header
+  - [x] Call POST /api/auth/logout
+  - [x] Clear token/session
+  - [x] Redirect to login page
 
-- [ ] Add unit tests (backend)
-  - [ ] Test login with correct credentials
-  - [ ] Test login with incorrect credentials
-  - [ ] Test protected routes require auth
-  - [ ] Test logout clears session
+- [x] Add unit tests (backend)
+  - [x] Test login with correct credentials
+  - [x] Test login with incorrect credentials
+  - [x] Test protected routes require auth
+  - [x] Test logout clears session
 
-- [ ] Add unit tests (frontend)
-  - [ ] Test login form submission
-  - [ ] Test error display on failed login
-  - [ ] Test redirect to board on success
-  - [ ] Test logout button works
+- [x] Add unit tests (frontend)
+  - [x] Test login form submission
+  - [x] Test error display on failed login
+  - [x] Test redirect to board on success
+  - [x] Test logout button works
 
-- [ ] Add E2E tests
-  - [ ] Test login flow with correct credentials
-  - [ ] Test rejection of incorrect credentials
-  - [ ] Test board only visible after login
-  - [ ] Test logout and re-login
+- [x] Add E2E tests
+  - [x] Test login flow with correct credentials
+  - [x] Test rejection of incorrect credentials
+  - [x] Test board only visible after login
+  - [x] Test logout and re-login
 
 ### Success Criteria
 - ✅ GET / redirects to login if not authenticated
