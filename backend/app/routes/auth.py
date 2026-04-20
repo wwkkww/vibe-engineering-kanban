@@ -2,7 +2,7 @@
 import hashlib
 import uuid
 import os
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Request
 from app.models import LoginRequest, LoginResponse, VerifyResponse
 from app.db import get_user_by_username, create_user, user_exists
 import jwt
@@ -96,7 +96,7 @@ async def logout(response: Response):
 
 
 @router.get("/auth/verify")
-async def verify(request):
+async def verify(request: Request):
     """Verify token endpoint."""
     # Get token from cookie or header
     token = request.cookies.get("auth_token")

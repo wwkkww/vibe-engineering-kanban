@@ -12,7 +12,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     if (!isLoading && !isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isLoading, isAuthenticated]);
 
   if (isLoading) {
     return <div>Loading...</div>;

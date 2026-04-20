@@ -52,7 +52,7 @@ export const KanbanBoard = () => {
     };
 
     loadBoard();
-  }, [router]);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -164,6 +164,24 @@ export const KanbanBoard = () => {
     syncBoard(updatedBoard);
   };
 
+  const handleUpdateCard = (
+    columnId: string,
+    cardId: string,
+    title: string,
+    details: string
+  ) => {
+    const updatedBoard = {
+      ...board,
+      cards: {
+        ...board.cards,
+        [cardId]: { ...board.cards[cardId], title, details },
+      },
+    };
+
+    setBoard(updatedBoard);
+    syncBoard(updatedBoard);
+  };
+
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
 
   if (isLoading) {
@@ -239,6 +257,7 @@ export const KanbanBoard = () => {
                 onRename={handleRenameColumn}
                 onAddCard={handleAddCard}
                 onDeleteCard={handleDeleteCard}
+                onUpdateCard={handleUpdateCard}
               />
             ))}
           </section>
